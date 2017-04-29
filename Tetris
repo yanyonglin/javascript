@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+		
+	</head>
+	<body>
+		
+		<div style="text-align: center;margin-top: 50px;">
+			<canvas id="myCanvas" width="400" height="200" style="border:1px solid  darkgray;"  ></canvas>
+		</div>
+		<!-- 操作区 -->
+		<div style="float:  right; margin-right: 250px;margin-top: -575px;">
+			<div>
+				<canvas id="nextBoxCanvas" width="100" height="100" style="border:1px  solid  darkgray;" ></canvas>
+			</div>
+			<div style="margin-top: 10px;">
+				积分:<span id="gameScoreSpan">0</span>
+			</div>
+			
+			<div style="border: 1px solid gray ;margin-top: 20px;line-height: 2rem;padding: 10px;" >
+				<div class="operation">
+					开始游戏:S
+				</div>
+				<div class="operation">
+					暂停游戏:P
+				</div>
+				<div class="operation">
+					重新开始:R
+				</div>
+				<div class="operation">
+					向左移动:左箭头
+				</div>
+				<div class="operation">
+					向右移动:右箭头
+				</div>
+				<div class="operation">
+					向下移动:下箭头
+				</div>
+				<div class="operation">
+					变形:空格或上箭头
+				</div>
+				
+			</div>
+		</div>
+	</body>
+	
+	<script type="text/javascript">
+		/**
+		*作者:yanyonglin
+		*邮箱:136083918@qq.com
+		*日期:20170429
+		*/
+		//开始定义全局变量
+		var BoxUnit = 20;
+		var BoxBGColor = "#ff4e20"; //方块颜色
+		var GameBGColor = "#d9b611";//游戏背景颜色
+		var CanvasWidth = 400;
+		var CanvasHeight = 600;
+		var BoxArr = ["I","I1","L","L1","L2","L3","J2","J3","J","J1","T","T1","T2","T3","S","S1","Z","Z1","O"];
+		var curBox = null;
+		var curBoxArr = [];
+		var timerId = null; //全局的定时器
+		var gameScore = 0 ;
+		//全局变量结束
+		
+		function Box(){
+			this.boxType = BoxArr[Math.floor(Math.random()*19)];
+			//this.boxType = "I1";
+			this.xPosition = CanvasWidth/2;  //暂时先设置为中央,完了根据方块类型调试
+			this.yPosition =0;  //开始在最上方
+			this.stable = false; //还没有停好
+		}
+		Box.prototype.moveDown = function(){
+		
+			if(timerId!=null && this.yPosition <= CanvasHeight){
+				var moveFlag = false;
+				
+				if(this.boxType == "I"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,null,null,null,
+					this.yPosition + BoxUnit/2,null,null,null);
+				}else if(this.boxType == "I1"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,this.xPosition + 5*BoxUnit/2,this.xPosition + 7*BoxUnit/2,
+					this.yPosition + BoxUnit/2,this.yPosition + BoxUnit/2,this.yPosition + BoxUnit/2,this.yPosition + BoxUnit/2)
+				}else if(this.boxType == "L" || this.boxType == "J"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,null,null,
+					this.yPosition +BoxUnit/2,this.yPosition +BoxUnit/2,null,null);
+				}else if(this.boxType == "L1"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,
+					this.yPosition +BoxUnit/2,this.yPosition - BoxUnit/2,this.yPosition - BoxUnit/2,null)
+				}else if(this.boxType == "L2"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,null,null,
+					this.yPosition -3*BoxUnit/2,this.yPosition + BoxUnit/2,null,null);
+				}else if(this.boxType == "L3" || this.boxType == "J1" ||this.boxType == "T2"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,
+					this.yPosition +BoxUnit/2,this.yPosition +BoxUnit/2,this.yPosition +BoxUnit/2,null)
+				}else if(this.boxType == "J2"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,null,null,
+					this.yPosition + BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null);
+				}else if(this.boxType == "J3"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - BoxUnit/2,this.yPosition + BoxUnit/2,null);
+				}else if(this.boxType == "T"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition + BoxUnit/2,this.yPosition -BoxUnit/2,null)
+				}else if(this.boxType == "T1" || this.boxType == "S1"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition + BoxUnit/2,null,null);
+				}else if(this.boxType == "T3" || this.boxType == "Z1"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,null,null,
+					this.yPosition + BoxUnit/2,this.yPosition - BoxUnit/2,null,null)
+				}else if(this.boxType == "S"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,
+					this.yPosition + BoxUnit/2,this.yPosition + BoxUnit/2,this.yPosition - BoxUnit/2,null)
+				}else if(this.boxType == "Z"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3*BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition + BoxUnit/2,this.yPosition + BoxUnit/2,null)
+				}else if(this.boxType == "O"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + 3* BoxUnit/2,null,null,
+					this.yPosition + BoxUnit/2,this.yPosition + BoxUnit/2,null,null)
+				}
+				
+				if(moveFlag){
+					this.clear();
+					this.yPosition = this.yPosition + BoxUnit;
+					this.drawBox();
+				}else{
+					this.stable = true;
+					if(this.yPosition == 0){
+						clearInterval(timerId);
+						alert("游戏结束");
+					}else{
+						pauseGame();
+						this.clearFinishLine();
+						
+					
+						curBox = curBoxArr.shift();
+						curBoxArr.push(new Box());
+						curBoxArr[0].drawNextBox();
+					}
+				}
+			}
+			
+		}
+		
+		Box.prototype.moveLeft = function(){
+			//先擦除，然后绘制
+			
+			if(this.yPosition - BoxUnit >= 0 && this.xPosition >= BoxUnit && this.yPosition <= CanvasHeight){
+				var moveFlag = false;
+				
+				if(this.boxType == "I"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition -5*BoxUnit/2,this.yPosition - 7*BoxUnit/2)
+				}else if(this.boxType == "I1"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,null,null,null,
+					this.yPosition -BoxUnit/2,null,null,null)
+				}else if(this.boxType == "L"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition -5*BoxUnit/2,null)
+				}else if(this.boxType == "L1"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null)
+				}else if(this.boxType == "L2"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition + BoxUnit/2,this.xPosition - BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null)
+				}else if(this.boxType == "L3"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition + 3*BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null)
+				}else if(this.boxType == "J2"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition -5*BoxUnit/2,null)
+				}else if(this.boxType == "J3"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + 3*BoxUnit/2,this.xPosition - BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null)
+				}else if(this.boxType == "J"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition + BoxUnit/2,this.xPosition + BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null)
+				}else if(this.boxType == "J1"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null)
+				}else if(this.boxType == "T"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition - BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null)
+				}else if(this.boxType == "T1"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition - BoxUnit/2,this.xPosition + BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null)
+				}else if(this.boxType == "T2"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition + BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null)
+				}else if(this.boxType == "T3"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null)
+				}else if(this.boxType == "S"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition + BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null)
+				}else if(this.boxType == "S1"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null)
+				}else if(this.boxType == "Z"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + BoxUnit/2,this.xPosition - BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null)
+				}else if(this.boxType == "Z1"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,this.xPosition + BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null)
+				}else if(this.boxType == "O"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition - BoxUnit/2,this.xPosition - BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null)
+				}
+				
+				if(moveFlag){
+					this.clear();
+					this.xPosition = this.xPosition - BoxUnit;
+					this.drawBox();
+				}
+				
+			}
+			
+		}
+		
+		
+		
+		Box.prototype.moveRight = function(){
+			if(this.yPosition - BoxUnit >= 0 && this.xPosition <= CanvasWidth - 2*BoxUnit && this.yPosition <= CanvasHeight){
+				
+				var moveFlag = false;
+				
+				if(this.boxType == "I"){
+					moveFlag = checkMoveBoxColorOK(this.xPosition + 3*BoxUnit/2,this.xPosition + 3*BoxUnit/2,this.xPosition + 3*BoxUnit/2,this.xPosition + 3*BoxUnit/2,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition -5*BoxUnit/2,this.yPosition - 7*BoxUnit/2);
+				}else if(this.boxType == "I1"){
+					//增加边距计算
+					if(this.xPosition + 5*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 9*BoxUnit/2,null,null,null,
+					this.yPosition -BoxUnit/2,null,null,null);
+					}
+					
+				}else if(this.boxType == "L"){
+					if(this.xPosition + 3*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition +5* BoxUnit/2,this.xPosition +3*BoxUnit/2,this.xPosition +3* BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition -5*BoxUnit/2,null);
+					}
+				}else if(this.boxType == "L1"){
+					if(this.xPosition + 4*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 3*BoxUnit/2,this.xPosition + 7*BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null);
+					}
+				}else if(this.boxType == "L2"){
+					if(this.xPosition + 3*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 5*BoxUnit/2,this.xPosition + 5*BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null);
+					}
+				}else if(this.boxType == "L3"){
+					if(this.xPosition + 4*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition +7* BoxUnit/2,this.xPosition + 7*BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null);
+					}
+					
+				}else if(this.boxType == "J2"){
+					if(this.xPosition + 3*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 3*BoxUnit/2,this.xPosition + 3*BoxUnit/2,this.xPosition +5* BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition -5*BoxUnit/2,null);
+					}
+					
+				}else if(this.boxType == "J3"){
+					if(this.xPosition + 4*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 7*BoxUnit/2,this.xPosition +7* BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null);
+					}
+					
+				}else if(this.boxType == "J"){
+					if(this.xPosition + 3*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition +5* BoxUnit/2,this.xPosition + 5*BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,
+						this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null)
+					}
+				}else if(this.boxType == "J1"){
+					if(this.xPosition + 3*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition +7* BoxUnit/2,this.xPosition +7* BoxUnit/2,null,null,
+						this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null)
+					}
+				}else if(this.boxType == "T"){
+					if(this.xPosition + 4*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 5*BoxUnit/2,this.xPosition +7* BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null);
+					}
+					
+				}else if(this.boxType == "T1"){
+					if(this.xPosition + 3*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 5*BoxUnit/2,this.xPosition +5* BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null);
+					}
+					
+				}else if(this.boxType == "T2"){
+					if(this.xPosition + 4*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition +7* BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null);
+					}
+					
+				}else if(this.boxType == "T3"){
+					if(this.xPosition + 3*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 3*BoxUnit/2,this.xPosition +5* BoxUnit/2,this.xPosition + 3*BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null);
+					}
+					
+				}else if(this.boxType == "S"){
+					if(this.xPosition + 4*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition +5* BoxUnit/2,this.xPosition + 7*BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null);
+					}
+					
+				}else if(this.boxType == "S1"){
+					if(this.xPosition + 3*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 5*BoxUnit/2,this.xPosition +5* BoxUnit/2,this.xPosition +3*BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null);
+					}
+					
+				}else if(this.boxType == "Z"){
+					if(this.xPosition + 4*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 7*BoxUnit/2,this.xPosition +5* BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null);
+					}
+					
+				}else if(this.boxType == "Z1"){
+					if(this.xPosition + 3*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition + 3*BoxUnit/2,this.xPosition +5* BoxUnit/2,this.xPosition + 5*BoxUnit/2,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,this.yPosition - 5*BoxUnit/2,null);
+					}
+					
+				}else if(this.boxType == "O"){
+					if(this.xPosition + 3*BoxUnit <= CanvasWidth){
+						moveFlag = checkMoveBoxColorOK(this.xPosition +5* BoxUnit/2,this.xPosition + 5* BoxUnit/2,null,null,
+					this.yPosition -BoxUnit/2,this.yPosition - 3*BoxUnit/2,null,null);
+					}
+					
+				}
+				
+				if(moveFlag){
+					this.clear();
+					this.xPosition = this.xPosition + BoxUnit;
+					this.drawBox();
+				}
+				
+				
+			}
+		}
+		
+		//变形
+		Box.prototype.changeType = function(){
+			//方块完全进入视野后，才能开始变形
+			var checkArr = [];
+			if(this.yPosition - 3* BoxUnit >= 0 && this.yPosition <= CanvasHeight){
+				if(this.boxType == "I"){
+					//第一种旋转
+					var changeFlag = true;
+					if(this.yPosition - 4* BoxUnit >= 0 && this.xPosition - 2*BoxUnit >= 0 && this.xPosition + BoxUnit <= CanvasWidth){
+						for(var i=0;i<4;i++){
+							for(var j=0;j<4;j++){
+								if(i!=2){
+									checkArr.push([this.xPosition-2*BoxUnit+ i*BoxUnit+ BoxUnit/2,this.yPosition-4*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						changeFlag = checkNotContainBox(checkArr);
+					}else{
+						changeFlag = false;
+					}
+					//如果第一种已经可以变形，就不再考虑第二种
+					if(changeFlag){
+						this.clear();
+						this.boxType = "I1";
+						this.xPosition = this.xPosition - 2*BoxUnit;
+						this.yPosition = this.yPosition - BoxUnit;
+						this.drawBox();
+					}else{
+						checkArr = [];
+						if(this.yPosition - 4* BoxUnit >= 0 && this.xPosition - BoxUnit >= 0 && this.xPosition + 2*BoxUnit <= CanvasWidth){
+							for(var i=0;i<4;i++){
+								for(var j=0;j<4;j++){
+									if(i!=1){
+										checkArr.push([this.xPosition-BoxUnit+ i*BoxUnit+ BoxUnit/2,this.yPosition-4*BoxUnit + j*BoxUnit + BoxUnit/2]);
+									}
+								}
+							}
+							
+							if(checkNotContainBox(checkArr)){
+								this.clear();
+								this.boxType = "I1";
+								this.xPosition = this.xPosition - BoxUnit;
+								this.yPosition = this.yPosition - 2*BoxUnit;
+								this.drawBox();
+							}
+						}
+					}
+				}else if(this.boxType == "I1"){
+					//第一种旋转
+					var changeFlag = true;
+					if(this.yPosition - 2* BoxUnit >= 0){
+						for(var i=0;i<4;i++){
+							for(var j=0;j<4;j++){
+								if(j!=1){
+									checkArr.push([this.xPosition + i*BoxUnit+ BoxUnit/2,this.yPosition-2*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						changeFlag = checkNotContainBox(checkArr);
+					}else{
+						changeFlag = false;
+					}
+					//如果第一种已经可以变形，就不再考虑第二种
+					if(changeFlag){
+						this.clear();
+						this.boxType = "I";
+						this.xPosition = this.xPosition + 2*BoxUnit;
+						this.yPosition = this.yPosition + 2*BoxUnit;
+						this.drawBox();
+					}else{
+						checkArr = [];
+						if(this.yPosition - 3* BoxUnit >= 0){
+							for(var i=0;i<4;i++){
+								for(var j=0;j<4;j++){
+									if(j!=2){
+										checkArr.push([this.xPosition+ i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+									}
+								}
+							}
+							
+							if(checkNotContainBox(checkArr)){
+								this.clear();
+								this.boxType = "I";
+								this.xPosition = this.xPosition + BoxUnit;
+								this.yPosition = this.yPosition + BoxUnit;
+								this.drawBox();
+							}
+						}
+					}
+				}else if(this.boxType == "L"){
+					if(this.xPosition - BoxUnit >= 0){
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if(i==1 || (i==2&&j==2)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition -BoxUnit + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "L1";
+							this.xPosition = this.xPosition - BoxUnit;
+							this.drawBox();
+						}
+					}
+				
+				}else if(this.boxType == "L1"){
+					
+					for(var i=0;i<3;i++){
+						for(var j=0;j<3;j++){
+							if(j==1 || (i==0&&j==2)){
+								continue;
+							}else{
+								checkArr.push([this.xPosition + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+							}
+						}
+					}
+					
+					if(checkNotContainBox(checkArr)){
+						this.clear();
+						this.boxType = "L2";
+						this.drawBox();
+					}
+					
+				
+				}else if(this.boxType == "L2"){
+					if(this.xPosition + BoxUnit <= CanvasWidth){
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if(i==1 || (i==0&&j==0)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition  + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "L3";
+							this.yPosition = this.yPosition - BoxUnit;
+							this.drawBox();
+						}
+					}
+					
+				}else if(this.boxType == "L3"){
+					
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if(j==1 || (i==2&&j==0)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition  + i*BoxUnit+ BoxUnit/2,this.yPosition-2*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "L";
+							this.xPosition = this.xPosition + BoxUnit;
+							this.yPosition = this.yPosition + BoxUnit;
+							this.drawBox();
+						}
+					
+					
+				}else if(this.boxType == "J"){
+					if(this.xPosition + BoxUnit <= CanvasWidth){
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if(i==1 || (i==0&&j==2)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition  + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "J1";
+							this.yPosition = this.yPosition - BoxUnit;
+							this.drawBox();
+						}
+					}
+				
+				}else if(this.boxType == "J1"){
+					
+					for(var i=0;i<3;i++){
+						for(var j=0;j<3;j++){
+							if(j==1 || (i==0&&j==0)){
+								continue;
+							}else{
+								checkArr.push([this.xPosition + i*BoxUnit+ BoxUnit/2,this.yPosition-2*BoxUnit + j*BoxUnit + BoxUnit/2]);
+							}
+						}
+					}
+					
+					if(checkNotContainBox(checkArr)){
+						this.clear();
+						this.boxType = "J2";
+						this.xPosition = this.xPosition + BoxUnit;
+						this.yPosition = this.yPosition + BoxUnit;
+						this.drawBox();
+					}
+					
+				
+				}else if(this.boxType == "J2"){
+					if(this.xPosition - BoxUnit >=0){
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if(i==1 || (i==2&&j==0)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition  - BoxUnit + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "J3";
+							this.xPosition = this.xPosition - BoxUnit;
+							this.drawBox();
+						}
+					}
+					
+				}else if(this.boxType == "J3"){
+					
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if(j==1 || (i==2&&j==2)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition   + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "J";
+							this.drawBox();
+						}
+					
+					
+				}else if(this.boxType == "T"){
+					
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if(j==1 || (i==1&&j==2)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition  + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "T1";
+							this.drawBox();
+						}
+					
+				
+				}else if(this.boxType == "T1"){
+					if(this.xPosition + BoxUnit <= CanvasWidth){
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if(i==1 || (i==0&&j==1)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "T2";
+							this.yPosition = this.yPosition - BoxUnit;
+							this.drawBox();
+						}
+					}
+				}else if(this.boxType == "T2"){
+					
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if(j==1 || (i==1&&j==0)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition  + i*BoxUnit+ BoxUnit/2,this.yPosition-2*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "T3";
+							this.xPosition = this.xPosition + BoxUnit;
+							this.yPosition = this.yPosition + BoxUnit;
+							this.drawBox();
+						}
+					
+				}else if(this.boxType == "T3"){
+					if(this.xPosition - BoxUnit >=0){
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if(i==1 || (i==2&&j==1)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition -BoxUnit + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "T";
+							this.xPosition = this.xPosition - BoxUnit;
+							this.drawBox();
+						}
+					
+					}
+				}else if(this.boxType == "S"){
+					 
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if((j==0&&i>0) || (j==1&&i<2)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition   + i*BoxUnit+ BoxUnit/2,this.yPosition-2*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "S1";
+							this.xPosition = this.xPosition + BoxUnit;
+							this.yPosition = this.yPosition + BoxUnit;
+							this.drawBox();
+						}else{
+							//考虑第二种旋转情况
+							checkArr = [];
+							for(var i=0;i<3;i++){
+								for(var j=0;j<3;j++){
+									if((j==1&&i>0) || (j==2&&i<2)){
+										continue;
+									}else{
+										checkArr.push([this.xPosition   + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+									}
+								}
+							}
+							if(checkNotContainBox(checkArr)){
+								this.clear();
+								this.boxType = "S1";
+								this.drawBox();
+							}
+						}
+					
+				}else if(this.boxType == "S1"){
+					var changeFlag = true;
+					if(this.xPosition - BoxUnit >=0){
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if((i==1&&j<2) || (i==2&&j>0)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition   + i*BoxUnit+ BoxUnit/2,this.yPosition-2*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						changeFlag = checkNotContainBox(checkArr);
+					}else{
+						changeFlag = false;
+					}
+					
+					if(changeFlag){
+						this.clear();
+						this.boxType = "S";
+						this.xPosition = this.xPosition - BoxUnit;
+						this.drawBox();
+					}else{
+						//第一种转换失败，尝试第二种
+						if(this.xPosition + BoxUnit <= CanvasWidth){
+							checkArr = [];
+							for(var i=0;i<3;i++){
+								for(var j=0;j<3;j++){
+									if((i==0&&j<2) || (i==1&&j>0)){
+										continue;
+									}else{
+										checkArr.push([this.xPosition   + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+									}
+								}
+							}
+							if(checkNotContainBox(checkArr)){
+								this.clear();
+								this.boxType = "S";
+								this.yPosition = this.yPosition - BoxUnit;
+								this.drawBox();
+							}
+						}
+						
+						
+					}
+						
+						
+				}else if(this.boxType == "Z"){
+					 
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if((j==0&&i<2) || (j==1&&i>0)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition   + i*BoxUnit+ BoxUnit/2,this.yPosition-2*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						if(checkNotContainBox(checkArr)){
+							this.clear();
+							this.boxType = "Z1";
+							this.xPosition = this.xPosition + BoxUnit;
+							this.yPosition = this.yPosition + BoxUnit;
+							this.drawBox();
+						}else{
+							//考虑第二种旋转情况
+							checkArr = [];
+							for(var i=0;i<3;i++){
+								for(var j=0;j<3;j++){
+									if((j==1&&i<2) || (j==2&&i>0)){
+										continue;
+									}else{
+										checkArr.push([this.xPosition   + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+									}
+								}
+							}
+							if(checkNotContainBox(checkArr)){
+								this.clear();
+								this.boxType = "Z1";
+								this.drawBox();
+							}
+						}
+					
+				}else if(this.boxType == "Z1"){
+					var changeFlag = true;
+					if(this.xPosition - BoxUnit >=0){
+						for(var i=0;i<3;i++){
+							for(var j=0;j<3;j++){
+								if((i==1&&j>0) || (i==2&&j<2)){
+									continue;
+								}else{
+									checkArr.push([this.xPosition   + i*BoxUnit+ BoxUnit/2,this.yPosition-2*BoxUnit + j*BoxUnit + BoxUnit/2]);
+								}
+							}
+						}
+						
+						changeFlag = checkNotContainBox(checkArr);
+					}else{
+						changeFlag = false;
+					}
+					
+					if(changeFlag){
+						this.clear();
+						this.boxType = "Z";
+						this.xPosition = this.xPosition - BoxUnit;
+						this.drawBox();
+					}else{
+						//第一种转换失败，尝试第二种
+						if(this.xPosition + BoxUnit <= CanvasWidth){
+							checkArr = [];
+							for(var i=0;i<3;i++){
+								for(var j=0;j<3;j++){
+									if((i==0&&j>0) || (i==1&&j<2)){
+										continue;
+									}else{
+										checkArr.push([this.xPosition   + i*BoxUnit+ BoxUnit/2,this.yPosition-3*BoxUnit + j*BoxUnit + BoxUnit/2]);
+									}
+								}
+							}
+							if(checkNotContainBox(checkArr)){
+								this.clear();
+								this.boxType = "Z";
+								this.yPosition = this.yPosition - BoxUnit;
+								this.drawBox();
+							}
+						}
+						
+						
+					}
+						
+						
+				}
+			}	
+		}
+		
+		Box.prototype.drawBox = function(){
+			//如果方块第三行已经移动下来，进行绘制
+			if(this.yPosition - BoxUnit >= 0 && this.yPosition <= CanvasHeight){
+				
+				//ctx.beginPath();
+				ctx.fillStyle=BoxBGColor;
+				if(this.boxType == "I"){
+					//如果全部进入
+					if(this.yPosition - 4*BoxUnit >=0){
+						ctx.fillRect(this.xPosition,this.yPosition- 4* BoxUnit ,BoxUnit,4*BoxUnit );
+					}else{
+						ctx.fillRect(this.xPosition,0 ,BoxUnit,this.yPosition );
+					}
+				}else if(this.boxType == "I1"){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,4*BoxUnit,BoxUnit );
+				}else if(this.boxType == "L"){
+					if(this.yPosition - 3*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-3* BoxUnit,BoxUnit, BoxUnit);
+					}
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-2* BoxUnit,BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,2*BoxUnit,BoxUnit );
+				}else if(this.boxType == "L1"){
+					//如果第二行也进入canvas,开始绘制第二行
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-2* BoxUnit,3*BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,BoxUnit,BoxUnit );
+				}else if(this.boxType == "L2"){
+					if(this.yPosition - 3*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-3* BoxUnit,2*BoxUnit, BoxUnit);
+					}
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition +BoxUnit ,this.yPosition-2* BoxUnit,BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-BoxUnit,BoxUnit,BoxUnit );
+				}else if(this.boxType == "L3"){
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition +2* BoxUnit,this.yPosition-2* BoxUnit,BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,3*BoxUnit,BoxUnit );
+					
+				}else if(this.boxType == "J"){
+					if(this.yPosition - 3*BoxUnit >=0){
+						ctx.fillRect(this.xPosition +BoxUnit ,this.yPosition-3* BoxUnit,BoxUnit, BoxUnit);
+					}
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition +BoxUnit ,this.yPosition-2* BoxUnit,BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,2*BoxUnit,BoxUnit );
+					
+				}else if(this.boxType == "J1"){
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-2* BoxUnit,BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,3*BoxUnit,BoxUnit );
+					
+				}else if(this.boxType == "J2"){
+					if(this.yPosition - 3*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-3* BoxUnit,2*BoxUnit, BoxUnit);
+					}
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-2* BoxUnit,BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,BoxUnit,BoxUnit );
+				}else if(this.boxType == "J3"){
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-2* BoxUnit,3*BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition +2*BoxUnit,this.yPosition-BoxUnit,BoxUnit,BoxUnit );
+				}else if(this.boxType == "T"){
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-2* BoxUnit,3*BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-BoxUnit,BoxUnit,BoxUnit);
+				}else if(this.boxType == "T1"){
+					//如果第三行也进入canvas,开始绘制第三行
+					if(this.yPosition - 3*BoxUnit >=0){
+						ctx.fillRect(this.xPosition + BoxUnit ,this.yPosition-3* BoxUnit,BoxUnit, BoxUnit);
+					}
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-2* BoxUnit,2*BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-BoxUnit,BoxUnit,BoxUnit );
+				}else if(this.boxType == "T2"){
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition + BoxUnit,this.yPosition-2* BoxUnit,BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,3*BoxUnit,BoxUnit );
+				}else if(this.boxType == "T3"){
+					if(this.yPosition - 3*BoxUnit >=0){
+						ctx.fillRect(this.xPosition  ,this.yPosition-3* BoxUnit,BoxUnit, BoxUnit);
+					}
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition  ,this.yPosition-2* BoxUnit,2*BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,BoxUnit,BoxUnit );
+				}else if(this.boxType == "S"){
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition +BoxUnit,this.yPosition-2* BoxUnit,2* BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,2*BoxUnit,BoxUnit );
+				}else if(this.boxType == "S1"){
+					if(this.yPosition - 3*BoxUnit >=0){
+						ctx.fillRect(this.xPosition  ,this.yPosition-3* BoxUnit,BoxUnit, BoxUnit);
+					}
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition  ,this.yPosition-2* BoxUnit,2*BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-BoxUnit,BoxUnit,BoxUnit );
+				}else if(this.boxType == "Z"){
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition ,this.yPosition-2* BoxUnit,2*BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-BoxUnit,2*BoxUnit,BoxUnit );
+				}else if(this.boxType == "Z1"){
+					if(this.yPosition - 3*BoxUnit >=0){
+						ctx.fillRect(this.xPosition +BoxUnit ,this.yPosition-3* BoxUnit,BoxUnit, BoxUnit);
+					}
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition  ,this.yPosition-2* BoxUnit,2*BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,BoxUnit,BoxUnit );
+				}else if(this.boxType == "O"){
+					if(this.yPosition - 2*BoxUnit >=0){
+						ctx.fillRect(this.xPosition  ,this.yPosition-2* BoxUnit,2*BoxUnit, BoxUnit);
+					}
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,2*BoxUnit,BoxUnit );
+				}
+			}
+		}
+		
+		
+		Box.prototype.drawNextBox = function(){
+			
+			nextCtx.fillStyle=GameBGColor;
+			nextCtx.fillRect(0,0,5*BoxUnit,5*BoxUnit);	
+			//ctx.beginPath();
+			nextCtx.fillStyle=BoxBGColor;
+			if(this.boxType == "I"){
+				nextCtx.fillRect(2*BoxUnit,BoxUnit ,BoxUnit,4* BoxUnit);
+			}else if(this.boxType == "I1"){
+				nextCtx.fillRect(BoxUnit/2,2*BoxUnit,4*BoxUnit,BoxUnit );
+			}else if(this.boxType == "L"){
+				nextCtx.fillRect(BoxUnit ,BoxUnit,BoxUnit, BoxUnit);
+				nextCtx.fillRect(BoxUnit ,2* BoxUnit,BoxUnit, BoxUnit);
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,2*BoxUnit,BoxUnit );
+			}else if(this.boxType == "L1"){
+				
+				nextCtx.fillRect(BoxUnit,2* BoxUnit,3*BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,BoxUnit,BoxUnit );
+			}else if(this.boxType == "L2"){
+				
+				nextCtx.fillRect(2*BoxUnit ,BoxUnit,2*BoxUnit, BoxUnit);
+				
+				
+				nextCtx.fillRect(3*BoxUnit ,2* BoxUnit,BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(3*BoxUnit,3*BoxUnit,BoxUnit,BoxUnit );
+			}else if(this.boxType == "L3"){
+				
+				nextCtx.fillRect(3* BoxUnit,2* BoxUnit,BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,3*BoxUnit,BoxUnit );
+				
+			}else if(this.boxType == "J"){
+				
+				nextCtx.fillRect(2*BoxUnit , BoxUnit,BoxUnit, BoxUnit);
+				
+				
+				nextCtx.fillRect(2*BoxUnit ,2* BoxUnit,BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,2*BoxUnit,BoxUnit );
+				
+			}else if(this.boxType == "J1"){
+				
+				nextCtx.fillRect(BoxUnit ,2* BoxUnit,BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,3*BoxUnit,BoxUnit );
+				
+			}else if(this.boxType == "J2"){
+				
+				nextCtx.fillRect(BoxUnit ,BoxUnit,2*BoxUnit, BoxUnit);
+			
+				nextCtx.fillRect(BoxUnit ,2* BoxUnit,BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,BoxUnit,BoxUnit );
+			}else if(this.boxType == "J3"){
+				
+				nextCtx.fillRect(BoxUnit ,2* BoxUnit,3*BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(3*BoxUnit,3*BoxUnit,BoxUnit,BoxUnit );
+			}else if(this.boxType == "T"){
+				
+				nextCtx.fillRect(BoxUnit ,2* BoxUnit,3*BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(2*BoxUnit,3*BoxUnit,BoxUnit,BoxUnit);
+			}else if(this.boxType == "T1"){
+				nextCtx.fillRect(2*BoxUnit ,BoxUnit,BoxUnit, BoxUnit);
+				nextCtx.fillRect(BoxUnit ,2* BoxUnit,2*BoxUnit, BoxUnit);
+				nextCtx.fillRect(2*BoxUnit,3*BoxUnit,BoxUnit,BoxUnit );
+			}else if(this.boxType == "T2"){
+				
+				nextCtx.fillRect(2*BoxUnit,2* BoxUnit,BoxUnit, BoxUnit);
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,3*BoxUnit,BoxUnit );
+			}else if(this.boxType == "T3"){
+				
+				nextCtx.fillRect(BoxUnit  ,BoxUnit,BoxUnit, BoxUnit);
+				nextCtx.fillRect(BoxUnit  ,2* BoxUnit,2*BoxUnit, BoxUnit);
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,BoxUnit,BoxUnit );
+			}else if(this.boxType == "S"){
+				
+				nextCtx.fillRect(2*BoxUnit,2* BoxUnit,2* BoxUnit, BoxUnit);
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,2*BoxUnit,BoxUnit );
+			}else if(this.boxType == "S1"){
+				
+				nextCtx.fillRect(BoxUnit  ,BoxUnit,BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(BoxUnit  ,2* BoxUnit,2*BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(2*BoxUnit,3*BoxUnit,BoxUnit,BoxUnit );
+			}else if(this.boxType == "Z"){
+				
+				nextCtx.fillRect(BoxUnit ,2* BoxUnit,2*BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(2*BoxUnit,3*BoxUnit,2*BoxUnit,BoxUnit );
+			}else if(this.boxType == "Z1"){
+				
+				nextCtx.fillRect(2*BoxUnit ,BoxUnit,BoxUnit, BoxUnit);
+				nextCtx.fillRect(BoxUnit  ,2* BoxUnit,2*BoxUnit, BoxUnit);
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,BoxUnit,BoxUnit );
+			}else if(this.boxType == "O"){
+				
+				nextCtx.fillRect(BoxUnit  ,2* BoxUnit,2*BoxUnit, BoxUnit);
+				
+				nextCtx.fillRect(BoxUnit,3*BoxUnit,2*BoxUnit,BoxUnit );
+			}
+			
+			//ctx.closePath();
+			
+		}
+		
+		
+		
+		Box.prototype.clear = function(){
+			//从下往上数
+			//ctx.beginPath();
+			ctx.fillStyle=GameBGColor;
+			if(this.boxType == "I"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第二行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第3行已进入
+				if(this.yPosition - 3*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-3*BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第4行已进入
+				if(this.yPosition - 4*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-4*BoxUnit,BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "I1"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,4* BoxUnit, BoxUnit);
+				}
+			}else if(this.boxType == "L"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,2* BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第3行已进入
+				if(this.yPosition - 3* BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-3*BoxUnit, BoxUnit, BoxUnit);
+				}
+			}else if(this.boxType == "L1"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,3* BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "L2"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition +BoxUnit,this.yPosition-BoxUnit, BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition +BoxUnit,this.yPosition-2*BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第3行已进入
+				if(this.yPosition - 3* BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-3*BoxUnit, 2* BoxUnit, BoxUnit);
+				}
+			}else if(this.boxType == "L3"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,3* BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition +2*BoxUnit,this.yPosition-2*BoxUnit,BoxUnit, BoxUnit);
+				}
+			}else if(this.boxType == "J"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit, 2* BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition +BoxUnit,this.yPosition-2*BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第3行已进入
+				if(this.yPosition - 3* BoxUnit >=0){
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-3*BoxUnit,  BoxUnit, BoxUnit);
+				}
+			}else if(this.boxType == "J1"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,3* BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,BoxUnit, BoxUnit);
+				}
+			}else if(this.boxType == "J2"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第3行已进入
+				if(this.yPosition - 3* BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-3*BoxUnit, 2*BoxUnit, BoxUnit);
+				}
+			}else if(this.boxType == "J3"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition+2*BoxUnit,this.yPosition-BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,3* BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "T"){
+				//如果第1行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,3* BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "T1"){
+				//如果第一行已进入
+				
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,2* BoxUnit, BoxUnit);
+				}
+				if(this.yPosition - 3*BoxUnit >=0){
+					ctx.fillRect(this.xPosition +BoxUnit,this.yPosition-3*BoxUnit,2* BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "T2"){
+				//如果第一行已进入
+				
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,3*BoxUnit, BoxUnit);
+				}
+				//如果第一行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-2*BoxUnit,BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "T3"){
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,2* BoxUnit, BoxUnit);
+				}
+				if(this.yPosition - 3*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-3*BoxUnit,2* BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "S"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,2*BoxUnit, BoxUnit);
+				}
+				//如果第一行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-2*BoxUnit,2*BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "S1"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,2* BoxUnit, BoxUnit);
+				}
+				if(this.yPosition - 3*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-3*BoxUnit,BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "Z"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-BoxUnit,2*BoxUnit, BoxUnit);
+				}
+				//如果第一行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,2*BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "Z1"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,2* BoxUnit, BoxUnit);
+				}
+				if(this.yPosition - 3*BoxUnit >=0){
+					ctx.fillRect(this.xPosition+BoxUnit,this.yPosition-3*BoxUnit,BoxUnit, BoxUnit);
+				}
+				
+			}else if(this.boxType == "O"){
+				//如果第一行已进入
+				if(this.yPosition - BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-BoxUnit,2*BoxUnit, BoxUnit);
+				}
+				//如果第2行已进入
+				if(this.yPosition - 2*BoxUnit >=0){
+					ctx.fillRect(this.xPosition,this.yPosition-2*BoxUnit,2*BoxUnit, BoxUnit);
+				}
+				
+			}
+		}
+		
+		Box.prototype.clearFinishLine = function(){
+			var clearLines = this.yPosition >= 4*BoxUnit ? 4 : this.yPosition/BoxUnit;
+			var clearYPosition = this.yPosition;
+			var clearBoxArr = [];//将要清理的对象
+			for(var j=0;j<clearLines;j++){
+				var checkClearArr = [];
+				for(var i=0;i<CanvasWidth/BoxUnit;i++){
+					checkClearArr.push([i*BoxUnit+BoxUnit/2,this.yPosition -j*BoxUnit-BoxUnit/2]);
+				}
+				//如果都是方块，需要消除
+				if(checkFullBox(checkClearArr)){
+					//如果需要删除，放入删除数组
+					clearBoxArr = clearBoxArr.concat(checkClearArr);
+				}
+			}
+			var moveLine = clearBoxArr.length * BoxUnit/CanvasWidth;
+			var moveYPosition = this.yPosition;
+			var clearLineTimer = setInterval(function(){
+				
+					if(clearBoxArr.length==0){
+						clearInterval(clearLineTimer);
+						if(moveLine>0){
+							//拷贝图像
+							var boxImage = ctx.getImageData(0,0,CanvasWidth,moveYPosition -moveLine*BoxUnit);
+							ctx.putImageData(boxImage,0,BoxUnit*moveLine);
+							
+							//顶部还原
+							ctx.fillStyle=GameBGColor;
+							ctx.fillRect(0,0,CanvasWidth,BoxUnit*moveLine);
+						}
+						gameScore = gameScore + moveLine * 100;
+						if(moveLine == 2){
+							gameScore = gameScore + 80;
+						}else if(moveLine == 3){
+							gameScore = gameScore + 100;
+						}else if(moveLine == 4){
+							gameScore = gameScore + 200;
+						}
+						document.getElementById("gameScoreSpan").innerHTML = gameScore;
+						startGame();
+					}else{
+						var clearBox = clearBoxArr.shift();
+						ctx.fillStyle=GameBGColor;
+						ctx.fillRect(clearBox[0]-BoxUnit/2,clearBox[1]-BoxUnit/2,BoxUnit,BoxUnit);
+					}
+				
+				},100);
+			
+			
+			
+		}
+		
+		var myCanvas = document.getElementById("myCanvas");
+		//初始化canvas宽度和高度
+		myCanvas.width = CanvasWidth;
+		myCanvas.height = CanvasHeight;
+		
+		var ctx = myCanvas.getContext("2d");
+		
+		var nextCanvas = document.getElementById("nextBoxCanvas");
+		nextCanvas.width = BoxUnit * 5;
+		nextCanvas.height = BoxUnit * 5;
+		var nextCtx = nextCanvas.getContext("2d");
+		
+		//初始化背景
+		ctx.beginPath();
+		ctx.fillStyle=GameBGColor;
+		ctx.fillRect(0,0,CanvasWidth,CanvasHeight);
+		
+
+		/**
+		 * 检查该位置数组中，是否已经包含BoxColor
+		 * @param {Object} posArr
+		 */
+		function checkNotContainBox(posArr){
+			console.log(curBox.xPosition);
+			var flag = true;
+			for(var i=0;i<posArr.length;i++){
+				
+				if(posArr[i][0]&&posArr[i][1]){
+					var pointData = ctx.getImageData(posArr[i][0], posArr[i][1],1,1).data;
+					var pointColor = "#"+ pointData[0].toString(16) + pointData[1].toString(16) + pointData[2].toString(16);
+					if(pointColor != GameBGColor){
+						flag = false;
+						break;
+					}
+				}
+				
+			}
+			
+			return flag;
+			
+		}
+		//检查方块，如果都是方块，可以删除
+		function checkFullBox(posArr){
+			console.log(curBox.xPosition);
+			var flag = true;
+			for(var i=0;i<posArr.length;i++){
+				
+				if(posArr[i][0]&&posArr[i][1]){
+					var pointData = ctx.getImageData(posArr[i][0], posArr[i][1],1,1).data;
+					var pointColor = "#"+ pointData[0].toString(16) + pointData[1].toString(16) + pointData[2].toString(16);
+					if(pointColor == GameBGColor){
+						flag = false;
+						break;
+					}
+				}
+				
+			}
+			
+			return flag;
+			
+		}
+		
+		
+		/**
+		 * 检查方块颜色，是否可以移动
+		 * @param {Object} pos1
+		 * @param {Object} pos2
+		 * @param {Object} pos3
+		 * @param {Object} pos4
+		 */
+		function checkMoveBoxColorOK(xPos1,xPos2,xPos3,xPos4,yPos1,yPos2,yPos3,yPos4){
+			var flag1 = true;
+			var flag2 = true;
+			var flag3 = true;
+			var flag4 = true;
+			if(xPos1&&yPos1&&xPos1>0&&yPos1>0){
+				var pointData = ctx.getImageData(xPos1, yPos1,1,1).data;
+				var pointColor = "#"+ pointData[0].toString(16) + pointData[1].toString(16) + pointData[2].toString(16);
+				
+				if(pointColor != GameBGColor){
+					flag1 = false;
+				}
+			}
+			if(!flag1){
+				return flag1;
+			}
+			
+			if(xPos2&&yPos2&&xPos2>0&&yPos2>0){
+				var pointData = ctx.getImageData(xPos2, yPos2,1,1).data;
+				var pointColor = "#"+ pointData[0].toString(16) + pointData[1].toString(16) + pointData[2].toString(16);
+				if(pointColor != GameBGColor){
+					flag2 = false;
+				}
+			}
+			if(!flag2){
+				return flag2;
+			}
+			
+			if(xPos3&&yPos3&&xPos3>0&&yPos3>0){
+				var pointData = ctx.getImageData(xPos3 , yPos3,1,1).data;
+				var pointColor = "#"+ pointData[0].toString(16) + pointData[1].toString(16) + pointData[2].toString(16);
+				if(pointColor != GameBGColor){
+					flag3 = false;
+				}
+			}
+			if(!flag3){
+				return flag3;
+			}
+			
+			if(xPos4&&yPos4&&xPos4>0&&yPos4>0){
+				var pointData = ctx.getImageData(xPos4 , yPos4,1,1).data;
+				var pointColor = "#"+ pointData[0].toString(16) + pointData[1].toString(16) + pointData[2].toString(16);
+				if(pointColor != GameBGColor){
+					flag4 = false;
+				}
+			}
+			
+			return flag4;
+		}
+		
+		
+		//暂停游戏
+		function pauseGame(){
+			clearInterval(timerId);
+			timerId = null;
+		}
+		
+		//重新开始
+		function restartGame(){
+			window.location.reload();
+		}
+		
+		//开始游戏
+		function startGame(){
+			//如果没有，创建对象
+			if(curBox == null){
+				curBoxArr.push(new Box());
+				curBoxArr[0].drawNextBox();
+				curBox = new Box();
+			}
+			if(timerId == null){
+				timerId = setInterval(function(){
+					curBox.moveDown();
+				},1000);
+			}
+			
+		}
+		
+	
+		
+		//添加onkeydown事件，用JS方式添加到document，用于实验，实际项目中，用JQuery代替
+		document.onkeydown = function (e){
+			var ev = e || window.event;//获取event对象  ,处理浏览器兼容
+			
+			//向左移动
+			if(ev.keyCode == 37){
+				curBox.moveLeft();
+			}else if(ev.keyCode == 39){
+				//向右移动
+				curBox.moveRight();
+			}else if(ev.keyCode == 38 || ev.keyCode == 32){
+				//向上变形
+				curBox.changeType();
+			}else if(ev.keyCode == 40){
+				//向下移动
+				curBox.moveDown();
+			}else if(ev.keyCode == 83){
+				//S键 开始
+				startGame();
+			}else if(ev.keyCode == 80){
+				//P键 暂停
+				pauseGame();
+			}else if(ev.keyCode == 82){
+				//R键 重新玩一局
+				restartGame();
+			}
+			
+		}
+		
+	</script>
+	
+</html>
