@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<script type="text/javascript">
+		/**
+		 * 约瑟夫环的数组实现，编号从1开始
+		 * @author yanyonglin
+		 * @date 20170501
+		 * @email 136083918@qq.com
+		 */
+		function showJosephCircleInfo(){
+			
+			
+			var peopleNum = document.getElementById("peopleNum").value ;//人员数量
+			var intervalNum = document.getElementById("intervalNum").value;//间隔
+			
+			if(peopleNum <0 ){
+				alert("人员不能是负数");
+				return;
+			}
+			//清空信息区
+			document.getElementById("result").innerHTML = ""; 
+			//初始化人员
+			var peopleArr = []; //存放人员的数组
+			for(var  i=0;i<peopleNum;i++){
+				peopleArr.push(i+1);
+			}
+			//算法区域
+			var curIndex = 0;
+			var realIndex = 0;
+			var removeNum = 0;
+			
+			while(removeNum< peopleNum){
+				
+			 	if(peopleArr[curIndex%peopleArr.length] != 0){
+					realIndex++;
+					if(realIndex%intervalNum == 0){
+						//移出人员
+						document.getElementById("result").innerHTML = document.getElementById("result").innerHTML +
+						"<div>移出编号:"+peopleArr[curIndex%peopleArr.length]+"</div>";
+						peopleArr[curIndex%peopleArr.length] = 0;
+						removeNum++;
+					}
+				}
+				curIndex++;
+			} 
+		}
+	</script>
+	<body>
+		<div>
+			<div>
+				人员数量:<input id="peopleNum" value="10" />
+				间隔数据:<input id="intervalNum" value="3" />
+				<input type="button" onclick="showJosephCircleInfo()" value="计算" />
+			</div>
+			<div id="result"></div>
+		</div>
+	</body>
+</html>
