@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+	</head>
+	<body>
+		
+		<div style="text-align: center;margin: 200px auto;">
+			<h1>冒泡排序详细过程</h1>
+			<canvas id="myCanvas" width="1500" height="600" style="border:1px solid #d3d3d3;">
+			您的浏览器不支持，建议下载最新版谷歌浏览器.
+			</canvas>
+		</div>
+		
+	</body>
+	<script type="text/javascript">
+	/**
+	*演示冒泡排序过程
+	*@author yanyonglin
+	*@email 136083918@qq.com
+	*
+	*/
+		//定义全局变量
+		var RectWidth = 100;//数据矩形宽度
+		var RectHeight = 100;//数据矩形高度
+		var RectTextMarginLeft = 20;//数据距离左边
+		var RectTextMarginTop = 100;//数据距离顶部
+		var RectMoveSpeed = 10;//移动速度
+		var RectTextSize = "60px Arial";
+		
+		
+		var container = document.getElementById("myCanvas");
+		var ctx = container.getContext("2d");
+		
+		//定义要排序的数组
+		var unorderedArr = [31,56,8,6,88,32,43,56,7,1,33,28]; 
+		
+		
+		//定义一个数据，用来存放排序数据
+		var sortDataArr = new Array();
+		
+		//绘制所有数据
+		for(var i=0;i<unorderedArr.length;i++){
+			var tempSortData = new Object();
+			tempSortData.index = i;
+			tempSortData.data = unorderedArr[i];
+			
+			tempSortData.x = RectTextMarginLeft + tempSortData.index * RectWidth + RectWidth/2;
+			tempSortData.y = RectTextMarginTop
+			tempSortData.width = RectWidth; //默认设置为方块的高度
+			tempSortData.height = RectHeight; //默认设置为方块的高度
+			sortDataArr.push(tempSortData);
+			drawData(tempSortData);
+		}
+		
+		
+		var drawObjArr = []; //定义绘图的数据移动队列
+		
+		//开始冒泡排序
+		for(var i=0;i<sortDataArr.length;i++){
+			for(var j=i+1;j<sortDataArr.length;j++){
+				var left = sortDataArr[i];
+				var right = sortDataArr[j];
+				if(left.data > right.data){
+					//将所有交换的步骤，深拷贝后，保存到drawObjArr当中，最后遍历显示
+					var drawObj = new Object();
+					drawObj.left = myClone(left);
+					drawObj.right = myClone(right);
+					drawObj.leftX = drawObj.left.x;
+					drawObj.leftY = drawObj.left.y;
+					drawObj.rightX = drawObj.right.x;
+					drawObj.rightY = drawObj.right.y;
+					drawObjArr.push(drawObj);
+					
+					var tempData = left.data;
+					left.data = right.data;
+					right.data = tempData;
+				}
+			}
+		}
+		//控制台打印排好序的数组
+		console.log(sortDataArr);
+		
+		var moveFlag = false;//定义移动标记，如果有一个方块在移动，其他方块等待
+		var curIndex = 0;//定义当前移动的步骤
+		//定义定时器，遍历要排序的步骤
+		var intervalId = setInterval(function(){
+			if(!moveFlag){
+				moveFlag = true;
+				var drawObj = drawObjArr[curIndex];
+				curIndex++;
+				swapData(drawObj.left,drawObj.right,drawObj.leftX,drawObj.leftY,drawObj.rightX,drawObj.rightY);
+			}
+			//如果所有排序完成，清除定时器
+			if(curIndex == drawObjArr.length){
+				clearInterval(intervalId);
+			}
+		},1000);
+		
+		
+		//根据数据，在画布中展示数据
+		function drawData(sortData){
+			ctx.beginPath();
+			ctx.rect(sortData.x,sortData.y,sortData.width,sortData.height);
+			ctx.closePath();
+			ctx.stroke();
+			//填充文本
+			ctx.textAlign="center";
+			ctx.textBaseline="middle";
+			ctx.font=RectTextSize;
+			ctx.fillText(sortData.data,sortData.x + RectWidth/2,sortData.y + RectHeight/2);
+		}
+		//交换两个数据
+		var count = 0;
+		/**
+		 * 
+		 * @param {Object} leftData 左边节点
+		 * @param {Object} rightData 右边节点
+		 * @param {Object} leftX 左边节点的初始X坐标
+		 * @param {Object} leftY 左边节点的初始Y坐标
+		 * @param {Object} rightX 右边节点的初始X坐标
+		 * @param {Object} rightY 右边节点的初始Y坐标
+		 */
+		function swapData(leftData,rightData,leftX,leftY,rightX,rightY){
+			
+				//左方块如果移动到了右边的方块，停止
+				if(leftData.x >= rightX  && leftData.y == leftY){
+					//break;
+					moveFlag = false;
+					return;
+					
+				}else{
+					
+					//
+					
+					//左方块 先往下移
+					if(leftData.x == leftX && leftData.y <= leftY + RectHeight){
+						ctx.clearRect(leftData.x-1,leftData.y-1,leftData.width+2,leftData.height+2);
+						leftData.y  = leftData.y + 1;  //每次向下移动方格高度的十分之一
+						
+						drawData(leftData);
+						
+						
+						//移动右方块
+						ctx.clearRect(rightData.x-1,rightData.y-1,rightData.width+2,rightData.height+2);
+						rightData.y  = rightData.y - 1;  //每次向下移动方格高度的十分之一					
+						drawData(rightData);
+					}else if(leftData.x < rightX  && leftData.y >= leftY + RectHeight){
+						//向右移动左方块
+						ctx.clearRect(leftData.x-1,leftData.y-1,leftData.width+2,leftData.height+2);
+						leftData.x  = leftData.x + 1;  //每次向右移动1个像素							
+						drawData(leftData);
+						
+						//向左移动右方块
+						ctx.clearRect(rightData.x-1,rightData.y-1,rightData.width+2,rightData.height+2);
+						rightData.x  = rightData.x - 1;  //每次向左移动1个像素						
+						drawData(rightData);
+					}else if(leftData.y >= leftY){
+						//向上移动左方块
+						ctx.clearRect(leftData.x-1,leftData.y-1,leftData.width+2,leftData.height+2);
+						leftData.y  = leftData.y - 1;  //每次向下移动方格高度的十分之一						
+						drawData(leftData);
+						
+						//向下移动右方块
+						ctx.clearRect(rightData.x-1,rightData.y-1,rightData.width+2,rightData.height+2);
+						rightData.y  = rightData.y + 1;  //每次向下移动方格高度的十分之一						
+						drawData(rightData);
+					}
+					
+					setTimeout(function(){swapData(leftData,rightData,leftX,leftY,rightX,rightY); },RectMoveSpeed);
+				}		
+		}
+		
+		//拷贝数据
+		function myClone(o){
+		    var k, ret= o, b;
+		    if(o && ((b = (o instanceof Array)) || o instanceof Object)) {
+		        ret = b ? [] : {};
+		        for(k in o){
+		            if(o.hasOwnProperty(k)){
+		                ret[k] = myClone(o[k]);
+		            }
+		        }
+		    }
+		    return ret;
+		}
+		
+	</script>
+</html>
