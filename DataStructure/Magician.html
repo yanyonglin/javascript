@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Magician</title>
+	</head>
+	<script type="text/javascript">
+		
+		/**
+		* 魔术师手中有A、2、3……J、Q、K十三张黑桃扑克牌。在表演魔术前，魔术师已经将他们按照一定的顺序叠放好（有花色的一面朝下）。魔术表演过程为：一开始，魔术师数1，然后把最上面的那张牌翻过来，是黑桃A；然后将其放到桌面上；第二次,魔术师数1、2；将第一张牌放到这些牌的最下面，将第二张牌翻转过来，正好是黑桃2；第三次，魔术师数1、2、3；将第1、2张牌依次放到这些牌的最下面，将第三张牌翻过来正好是黑桃3；……直到将所有的牌都翻出来为止。问原来牌的顺序是如何的。 
+ 		* 答案：1 8 2 5 10 3 12 11 9 4 7 6 13 
+ 		*@author yanyonglin
+ 		* @email 136083918@qq.com
+ 		* @date 20170503
+		*/
+		
+		var cardNum = 13;
+		
+		function MyNode(){
+			this.nodeValue = null;
+			this.next = null;
+			this.prev = null;
+		}
+		
+		function MyList(){
+			
+			this.first = null;
+			this.last = null;
+			this.length = 0;
+		}
+		
+		MyList.prototype.addNode = function(Node){
+			if(this.first == null){
+				this.first = Node;
+				//Node.next = this.last;
+				//Node.prev = this.last;
+			}else if(this.last == null){
+				this.last = Node;
+				Node.next = this.first;
+				Node.prev = this.first;
+				Node.isEnd = true;
+				
+				this.first.next = Node;
+				this.first.prev = Node;
+			}else{
+				this.last.next = Node;
+				Node.next = this.first;
+				Node.prev = this.last;
+				this.first.prev = Node;
+				
+				this.last.isEnd = false;
+				
+				
+				Node.isEnd = true;
+				this.last = Node;
+			}
+			
+			this.length++;
+		}
+		//返回排序结果，而且在控制台进行了打印
+		MyList.prototype.showNodes = function(Node){
+			var showNodesArr = [];
+			var node = this.last;
+			while(true){
+				node = 	node.next;
+				if(node){
+					console.log(node.nodeValue);
+					showNodesArr.push(node.nodeValue);
+				}
+				if(node==null || node.isEnd){
+					break;
+				}
+				
+			}
+			return showNodesArr;
+		}
+		//进行排序
+		MyList.prototype.sortCards = function(){
+			var node = this.last;
+			for(var i=1;i<14;i++){
+				for(var j=0;j<i;j++){
+					node = node.next;
+					while(node.nodeValue!=null){
+						node = node.next;
+					}
+				}
+				node.nodeValue = i;
+			}
+		}
+		
+		
+		var cardList = new MyList();
+		
+		
+		//添加13张牌的位置
+		for(var i=0;i<13;i++){
+			var node = new MyNode();
+			cardList.addNode(node);
+		}
+		
+		//开始排序
+		cardList.sortCards();
+		//定义返回结果
+		var resultArr = cardList.showNodes();
+		//输出结果
+		document.write("扑克排的顺序:"+resultArr);
+		
+	</script>
+	<body>
+	</body>
+</html>
