@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Clock</title>
+	</head>
+	
+	<body>
+		<div style="margin:200px auto;text-align: center;">
+			<canvas id="myCanvas"  ></canvas>
+		</div>
+	</body>
+	
+	<script  >
+		/**
+		 * 显示钟表的canvas小程序
+		 * @author yanyonglin
+		 * @email 136083918@qq.com
+		 * 
+		 * 事实上，这个程序用CSS和JS实现效果更好
+		 * 只是专门为了练习Canvas^_^
+		 * 
+		 * 
+		 */
+		
+		//定义全局变量
+		var ClockRadii = 100;
+		var EdgeDistance = 20;
+		
+		var myCanvas = document.getElementById("myCanvas");
+		myCanvas.width = 3*ClockRadii +EdgeDistance;
+		myCanvas.height=3*ClockRadii +EdgeDistance;
+		var ctx = myCanvas.getContext("2d");
+		 
+		//定义显示时间
+		function showClock(){
+			
+			var curDate = new Date();
+			var hour = curDate.getHours();
+			var minute = curDate.getMinutes();
+			var second = curDate.getSeconds();
+			
+			//开始消除
+			ctx.clearRect(0,0,myCanvas.width,myCanvas.height);
+			ctx.beginPath();
+			//开始画圆圈
+			ctx.lineWidth="10";
+			ctx.arc(2*EdgeDistance+ClockRadii,2*EdgeDistance+ClockRadii,ClockRadii + EdgeDistance,0,2*Math.PI);
+			ctx.stroke();
+			
+			//画12个数字
+			for(var i=0;i<12;i++){
+			ctx.fillText(i==0?12:i,2*EdgeDistance+ClockRadii + Math.sin(i*Math.PI/6) *ClockRadii,2*EdgeDistance+ClockRadii - Math.cos(i*Math.PI/6)*ClockRadii);
+			}
+			ctx.stroke();
+			//开始绘制时针
+			ctx.lineWidth = "7";
+			ctx.moveTo(2*EdgeDistance+ClockRadii,2*EdgeDistance+ClockRadii);
+			ctx.lineTo(2*EdgeDistance+ClockRadii + 0.6* Math.sin(hour*Math.PI/6+minute*Math.PI/360) *ClockRadii,2*EdgeDistance+ClockRadii - 0.6* Math.cos(hour*Math.PI/6+minute*Math.PI/360)*ClockRadii);
+			ctx.stroke();
+			
+			//开始绘制分针
+			ctx.lineWidth = "4";
+			ctx.moveTo(2*EdgeDistance+ClockRadii,2*EdgeDistance+ClockRadii);
+			ctx.lineTo(2*EdgeDistance+ClockRadii + 0.8* Math.sin(minute*Math.PI/30 + second*Math.PI/1800 ) *ClockRadii,2*EdgeDistance+ClockRadii - 0.8* Math.cos( minute*Math.PI/30 + second*Math.PI/1800)*ClockRadii);
+			ctx.stroke();
+			
+			//开始绘制秒针
+			ctx.lineWidth = "1";
+			ctx.moveTo(2*EdgeDistance+ClockRadii,2*EdgeDistance+ClockRadii);
+			ctx.lineTo(2*EdgeDistance+ClockRadii + 0.9* Math.sin(second*Math.PI/30) *ClockRadii,2*EdgeDistance+ClockRadii - 0.9* Math.cos(second*Math.PI/30)*ClockRadii);
+			ctx.stroke();
+			ctx.closePath();
+			
+		}
+		
+		showClock();
+		setInterval(showClock,1000);
+	</script>
+</html>
